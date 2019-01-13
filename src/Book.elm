@@ -1,4 +1,4 @@
-module Book exposing (Book, Msg(..), decode, view)
+module Book exposing (Book, Msg(..), decode, view, viewList)
 
 import Date exposing (Date)
 import Html exposing (..)
@@ -46,3 +46,23 @@ view model =
                 ]
             ]
         ]
+
+
+viewListItem : Book -> Html a
+viewListItem book =
+    li []
+        [ a [ href "#" ] [ text book.title ]
+        , text " (isbn: "
+        , case book.isbn of
+            Just isbn ->
+                text isbn
+
+            Nothing ->
+                text "unknown"
+        , text ")"
+        ]
+
+
+viewList : List Book -> Html a
+viewList books =
+    ul [] (List.map viewListItem books)

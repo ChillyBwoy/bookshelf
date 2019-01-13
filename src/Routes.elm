@@ -1,26 +1,25 @@
-module Routes exposing (Route(..), matchRoute, parseUrl, pathFor, routes)
+module Routes exposing (Route(..), parseUrl, pathFor, routes)
 
 import Url exposing (Url)
-import Url.Parser exposing ((</>), Parser, int, map, oneOf, parse, s, top)
+import Url.Parser exposing ((</>), int, map, oneOf, parse, s, top)
 
 
 type Route
     = HomeRoute
-    | BookListRoute
     | NotFoundRoute
-
-
-matchRoute : Parser (Route -> a) a
-matchRoute =
-    oneOf
-        [ map HomeRoute top
-        , map BookListRoute (s "books")
-        ]
+    | BookListRoute
 
 
 parseUrl : Url -> Route
 parseUrl url =
-    case parse matchRoute url of
+    let
+        parser =
+            oneOf
+                [ map HomeRoute top
+                , map BookListRoute (s "books")
+                ]
+    in
+    case parse parser url of
         Just route ->
             route
 

@@ -5,108 +5,128 @@ import Browser.Navigation as Nav
 import Debug
 import Html exposing (..)
 import Html.Attributes exposing (..)
-import Pages.BookList as BookList
-import Pages.Home as Home
+import Page.BookList as BookList
+import Page.Home as Home
 import Routes exposing (Route)
 import Shared exposing (..)
 import Url exposing (Url)
 
 
+
+-- MODEL
+
+
 type alias Model =
     { flags : Flags
-    , navKey : Nav.Key
-    , route : Route
+    , key : Nav.Key
     , page : Page
     }
 
 
 type Page
-    = PageNone
+    = PageNotFound
     | PageHome Home.Model
     | PageBookList BookList.Model
 
 
 type Msg
-    = OnUrlRequest UrlRequest
+    = NoOp
+    | OnUrlRequest UrlRequest
     | OnUrlChange Url
     | BookListMsg BookList.Msg
     | HomeMsg Home.Msg
 
 
+
+-- INIT
+
+
 init : Flags -> Url -> Nav.Key -> ( Model, Cmd Msg )
 init flags url key =
-    let
-        model =
-            { flags = flags
-            , route = Routes.parseUrl url
-            , navKey = key
-            , page = PageNone
-            }
-    in
-    ( model, Cmd.none ) |> loadPage
+    loadPage url
+        { flags = flags
+        , key = key
+        , page = PageNotFound
+        }
 
 
-loadPage : ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
-loadPage ( model, cmd ) =
-    let
-        ( page, newCmd ) =
-            case model.route of
-                Routes.HomeRoute ->
-                    let
-                        ( pageModel, pageCmd ) =
-                            Home.init model.flags
-                    in
-                    ( PageHome pageModel, Cmd.map HomeMsg pageCmd )
 
-                Routes.NotFoundRoute ->
-                    ( PageNone, Cmd.none )
-
-                Routes.BookListRoute ->
-                    let
-                        ( pageModel, pageCmd ) =
-                            BookList.init model.flags
-                    in
-                    ( PageBookList pageModel, Cmd.map BookListMsg pageCmd )
-    in
-    ( { model | page = page }, Cmd.batch [ cmd, newCmd ] )
+-- UPDATE
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
-update msg model =
-    case ( msg, model.page ) of
-        ( OnUrlRequest urlRequest, _ ) ->
+update message model =
+    case message of
+        NoOp ->
+            ( model, Cmd.none )
+
+        OnUrlRequest urlRequest ->
             case urlRequest of
                 Browser.Internal url ->
-                    ( model, Nav.pushUrl model.navKey (Url.toString url) )
+                    ( model
+                    , Nav.pushUrl model.key (Url.toString url)
+                    )
 
-                Browser.External url ->
-                    ( model, Nav.load url )
+                Browser.External href ->
+                    ( model
+                    , Nav.load href
+                    )
 
-        ( OnUrlChange url, _ ) ->
-            ( { model | route = Routes.parseUrl url }, Cmd.none ) |> loadPage
+        OnUrlChange url ->
+            loadPage url model
 
-        ( HomeMsg subMsg, PageHome pageModel ) ->
-            let
-                ( newPageModel, newCmd ) =
-                    Home.update subMsg pageModel
-            in
-            ( { model | page = PageHome newPageModel }, Cmd.map HomeMsg newCmd )
+        HomeMsg msg ->
+            case model.page of
+                PageHome home ->
+                    loadPageHome model (Home.update msg home)
 
-        ( BookListMsg subMsg, PageBookList pageModel ) ->
-            let
-                ( newPageModel, newCmd ) =
-                    BookList.update subMsg pageModel
-            in
-            ( { model | page = PageBookList newPageModel }, Cmd.map BookListMsg newCmd )
+                _ ->
+                    ( model, Cmd.none )
 
-        ( _, _ ) ->
-            ( model, Cmd.none )
+        BookListMsg msg ->
+            case model.page of
+                PageBookList bookList ->
+                    loadBookListPage model (BookList.update msg bookList)
+
+                _ ->
+                    ( model, Cmd.none )
+
+
+loadPageHome : Model -> ( Home.Model, Cmd Home.Msg ) -> ( Model, Cmd Msg )
+loadPageHome model ( home, cmds ) =
+    ( { model | page = PageHome home }
+    , Cmd.map HomeMsg cmds
+    )
+
+
+loadBookListPage : Model -> ( BookList.Model, Cmd BookList.Msg ) -> ( Model, Cmd Msg )
+loadBookListPage model ( bookList, cmds ) =
+    ( { model | page = PageBookList bookList }
+    , Cmd.map BookListMsg cmds
+    )
+
+
+loadPage : Url -> Model -> ( Model, Cmd Msg )
+loadPage url model =
+    case Routes.parseUrl url of
+        Routes.HomeRoute ->
+            loadPageHome model (Home.init model.flags)
+
+        Routes.BookListRoute ->
+            loadBookListPage model (BookList.init model.flags)
+
+        Routes.NotFoundRoute ->
+            ( { model | page = PageNotFound }, Cmd.none )
+
+
+
+-- SUBSCRIPTIONS
 
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
     case model.page of
-        PageNone ->
+        PageNotFound ->
             Sub.none
 
         PageHome pageModel ->
@@ -114,6 +134,10 @@ subscriptions model =
 
         PageBookList pageModel ->
             Sub.map BookListMsg (BookList.subscriptions pageModel)
+
+
+
+-- VIEW
 
 
 viewNavItem : ( String, String ) -> Html Msg
@@ -141,7 +165,7 @@ viewLayout model =
                 PageBookList pageModel ->
                     BookList.view pageModel |> Html.map BookListMsg
 
-                PageNone ->
+                PageNotFound ->
                     notFoundView
     in
     div []
@@ -164,6 +188,10 @@ notFoundView =
     div []
         [ text "Not found"
         ]
+
+
+
+-- MAIN
 
 
 main : Program Flags Model Msg

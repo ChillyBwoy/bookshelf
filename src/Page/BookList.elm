@@ -1,4 +1,4 @@
-module Pages.BookList exposing (Model, Msg(..), fetchBooks, init, subscriptions, update, view)
+module Page.BookList exposing (Model, Msg(..), fetchBooks, init, subscriptions, update, view)
 
 import Book exposing (Book)
 import Date exposing (Date)
@@ -51,7 +51,7 @@ view model =
         [ h1 [] [ text "Books" ]
         , case model.books of
             Loaded books ->
-                ul [] (List.map (\book -> li [] [ Book.view book ]) books)
+                Book.viewList books
 
             Loading ->
                 div [] [ text "Loading..." ]
