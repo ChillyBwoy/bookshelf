@@ -4,5 +4,7 @@ const {
 
 var app = Elm.Main.init({
   node: document.getElementById('elm'),
-  flags: Math.random(),
+  flags: {
+    api: '/api'
+  },
 });

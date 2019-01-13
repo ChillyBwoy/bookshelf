@@ -1,8 +1,10 @@
 const path = require('path');
 const HTMLWebpackPlugin = require('html-webpack-plugin');
 
+const IS_DEBUG = !process.argv.includes('--release');
+
 module.exports = {
-  mode: 'development',
+  mode: IS_DEBUG ? 'development' : 'production',
   devtool: 'source-map',
   entry: './src/index.js',
   target: 'web',
@@ -32,6 +34,9 @@ module.exports = {
           },
           {
             loader: 'elm-webpack-loader',
+            options: {
+              debug: true,
+            }
           }
         ],
       },
@@ -46,6 +51,7 @@ module.exports = {
             options: {
               importLoaders: 1,
               modules: true,
+              localIdentName: IS_DEBUG ? '[name]_[local]_[hash:base64:5]' : '[hash:base64:16]',
             }
           },
           {
@@ -75,5 +81,7 @@ module.exports = {
     stats: 'errors-only',
     contentBase: path.join(__dirname, 'src/assets'),
     historyApiFallback: true,
+    contentBase: path.resolve(__dirname, 'public'),
+    overlay: true
   }
 };
