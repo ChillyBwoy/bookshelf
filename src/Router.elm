@@ -1,4 +1,4 @@
-module Routes exposing (Route(..), parseUrl, pathFor, routes)
+module Router exposing (Route(..), parseUrl, pathFor)
 
 import Url exposing (Url)
 import Url.Parser exposing ((</>), int, map, oneOf, parse, s, top)
@@ -8,6 +8,7 @@ type Route
     = HomeRoute
     | NotFoundRoute
     | BookListRoute
+    | BookRoute Int
 
 
 parseUrl : Url -> Route
@@ -17,6 +18,7 @@ parseUrl url =
             oneOf
                 [ map HomeRoute top
                 , map BookListRoute (s "books")
+                , map BookRoute (s "books" </> int)
                 ]
     in
     case parse parser url of
@@ -33,15 +35,11 @@ pathFor route =
         HomeRoute ->
             "/"
 
-        BookListRoute ->
-            "/books"
-
         NotFoundRoute ->
             "/404"
 
+        BookListRoute ->
+            "/books"
 
-routes : List ( String, String )
-routes =
-    [ ( "Home", pathFor HomeRoute )
-    , ( "Books", pathFor BookListRoute )
-    ]
+        BookRoute id ->
+            "/books/" ++ String.fromInt id

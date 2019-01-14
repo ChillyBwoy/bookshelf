@@ -3,8 +3,10 @@ module Page.BookList exposing (Model, Msg(..), fetchBooks, init, subscriptions, 
 import Book exposing (Book)
 import Date exposing (Date)
 import Html exposing (..)
+import Html.Attributes exposing (..)
 import Http
 import Json.Decode as Decode exposing (Decoder)
+import Router exposing (Route(..))
 import Shared exposing (..)
 
 
@@ -45,13 +47,37 @@ subscriptions model =
     Sub.none
 
 
+viewListItem : Book -> Html a
+viewListItem book =
+    let
+        url =
+            Router.pathFor (BookRoute book.id)
+    in
+    li []
+        [ a [ href url ] [ text book.title ]
+        , text " (isbn: "
+        , case book.isbn of
+            Just isbn ->
+                text isbn
+
+            Nothing ->
+                text "unknown"
+        , text ")"
+        ]
+
+
+viewList : List Book -> Html a
+viewList books =
+    ul [] (List.map viewListItem books)
+
+
 view : Model -> Html Msg
 view model =
     div []
         [ h1 [] [ text "Books" ]
         , case model.books of
             Loaded books ->
-                Book.viewList books
+                viewList books
 
             Loading ->
                 div [] [ text "Loading..." ]

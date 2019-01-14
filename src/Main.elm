@@ -6,8 +6,9 @@ import Debug
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Page.BookList as BookList
+import Page.BookPage as Book
 import Page.Home as Home
-import Routes exposing (Route)
+import Router exposing (Route(..))
 import Shared exposing (..)
 import Url exposing (Url)
 
@@ -27,14 +28,16 @@ type Page
     = PageNotFound
     | PageHome Home.Model
     | PageBookList BookList.Model
+    | PageBook Book.Model
 
 
 type Msg
     = NoOp
     | OnUrlRequest UrlRequest
     | OnUrlChange Url
-    | BookListMsg BookList.Msg
     | HomeMsg Home.Msg
+    | BookListMsg BookList.Msg
+    | BookMsg Book.Msg
 
 
 
@@ -91,6 +94,14 @@ update message model =
                 _ ->
                     ( model, Cmd.none )
 
+        BookMsg msg ->
+            case model.page of
+                PageBook book ->
+                    loadBookPage model (Book.update msg book)
+
+                _ ->
+                    ( model, Cmd.none )
+
 
 loadPageHome : Model -> ( Home.Model, Cmd Home.Msg ) -> ( Model, Cmd Msg )
 loadPageHome model ( home, cmds ) =
@@ -106,17 +117,27 @@ loadBookListPage model ( bookList, cmds ) =
     )
 
 
+loadBookPage : Model -> ( Book.Model, Cmd Book.Msg ) -> ( Model, Cmd Msg )
+loadBookPage model ( home, cmds ) =
+    ( { model | page = PageBook home }
+    , Cmd.map BookMsg cmds
+    )
+
+
 loadPage : Url -> Model -> ( Model, Cmd Msg )
 loadPage url model =
-    case Routes.parseUrl url of
-        Routes.HomeRoute ->
+    case Router.parseUrl url of
+        NotFoundRoute ->
+            ( { model | page = PageNotFound }, Cmd.none )
+
+        HomeRoute ->
             loadPageHome model (Home.init model.flags)
 
-        Routes.BookListRoute ->
+        BookListRoute ->
             loadBookListPage model (BookList.init model.flags)
 
-        Routes.NotFoundRoute ->
-            ( { model | page = PageNotFound }, Cmd.none )
+        BookRoute id ->
+            loadBookPage model (Book.init model.flags)
 
 
 
@@ -129,11 +150,14 @@ subscriptions model =
         PageNotFound ->
             Sub.none
 
-        PageHome pageModel ->
-            Sub.map HomeMsg (Home.subscriptions pageModel)
+        PageHome m ->
+            Sub.map HomeMsg (Home.subscriptions m)
 
-        PageBookList pageModel ->
-            Sub.map BookListMsg (BookList.subscriptions pageModel)
+        PageBookList m ->
+            Sub.map BookListMsg (BookList.subscriptions m)
+
+        PageBook m ->
+            Sub.map BookMsg (Book.subscriptions m)
 
 
 
@@ -149,8 +173,15 @@ viewNavItem ( label, url ) =
 
 viewNav : Model -> Html Msg
 viewNav model =
+    let
+        routeList : List ( String, String )
+        routeList =
+            [ ( "Home", Router.pathFor HomeRoute )
+            , ( "Books", Router.pathFor BookListRoute )
+            ]
+    in
     nav []
-        [ ul [] (List.map viewNavItem Routes.routes)
+        [ ul [] (List.map viewNavItem routeList)
         ]
 
 
@@ -159,14 +190,17 @@ viewLayout model =
     let
         content =
             case model.page of
-                PageHome pageModel ->
-                    Home.view pageModel |> Html.map HomeMsg
-
-                PageBookList pageModel ->
-                    BookList.view pageModel |> Html.map BookListMsg
-
                 PageNotFound ->
                     notFoundView
+
+                PageHome m ->
+                    Home.view m |> Html.map HomeMsg
+
+                PageBookList m ->
+                    BookList.view m |> Html.map BookListMsg
+
+                PageBook m ->
+                    Book.view m |> Html.map BookMsg
     in
     div []
         [ viewNav model
