@@ -37,7 +37,7 @@ update msg model =
 fetchBooks : Flags -> Cmd Msg
 fetchBooks flags =
     Http.get
-        { url = flags.api ++ "/books.json"
+        { url = flags.api ++ "/books"
         , expect = Http.expectJson OnFetchBooks (Decode.list Book.decode)
         }
 
@@ -55,14 +55,7 @@ viewListItem book =
     in
     li []
         [ a [ href url ] [ text book.title ]
-        , text " (isbn: "
-        , case book.isbn of
-            Just isbn ->
-                text isbn
-
-            Nothing ->
-                text "unknown"
-        , text ")"
+        , text (" (isbn: " ++ book.isbn ++ ")")
         ]
 
 
@@ -76,11 +69,11 @@ view model =
     div []
         [ h1 [] [ text "Books" ]
         , case model.books of
-            Loaded books ->
-                viewList books
-
             Loading ->
                 div [] [ text "Loading..." ]
+
+            Loaded books ->
+                viewList books
 
             Failure ->
                 div [] [ text "Error" ]

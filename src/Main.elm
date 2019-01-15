@@ -5,8 +5,8 @@ import Browser.Navigation as Nav
 import Debug
 import Html exposing (..)
 import Html.Attributes exposing (..)
+import Page.Book as Book
 import Page.BookList as BookList
-import Page.BookPage as Book
 import Page.Home as Home
 import Router exposing (Route(..))
 import Shared exposing (..)
@@ -137,7 +137,7 @@ loadPage url model =
             loadBookListPage model (BookList.init model.flags)
 
         BookRoute id ->
-            loadBookPage model (Book.init model.flags)
+            loadBookPage model (Book.init model.flags id)
 
 
 

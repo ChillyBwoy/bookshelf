@@ -9,8 +9,8 @@ import Shared exposing (..)
 
 type alias Book =
     { id : Int
-    , description : Maybe String
-    , isbn : Maybe String
+    , description : String
+    , isbn : String
     , title : String
     , publishedAt : Maybe Date
     }
@@ -20,7 +20,7 @@ decode : Decoder Book
 decode =
     Decode.map5 Book
         (Decode.field "id" Decode.int)
-        (Decode.maybe (Decode.field "description" Decode.string))
-        (Decode.maybe (Decode.field "isbn" Decode.string))
+        (Decode.field "description" Decode.string)
+        (Decode.field "isbn" Decode.string)
         (Decode.field "title" Decode.string)
         (Decode.maybe (Decode.field "publishedAt" decodeDate))
