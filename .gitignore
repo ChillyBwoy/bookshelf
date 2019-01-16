@@ -1,5 +1,10 @@
 elm-stuff/
 
+.env
 .vscode
 .DS_Store
+
 public/js
+
+*.pyc
+*.sqlite3
