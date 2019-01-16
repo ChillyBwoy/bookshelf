@@ -4,7 +4,7 @@ elm-stuff/
 .vscode
 .DS_Store
 
-public/js
+client/public/assets
 
 *.pyc
 *.sqlite3
