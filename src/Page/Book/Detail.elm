@@ -1,9 +1,9 @@
-module Page.Book exposing (Model, Msg(..), init, subscriptions, update, view)
+module Page.Book.Detail exposing (Model, Msg(..), init, subscriptions, update, view)
 
-import Book exposing (Book)
 import Html exposing (..)
 import Http
 import Json.Decode as Decode exposing (Decoder)
+import Model exposing (Book, decodeBook)
 import Shared exposing (..)
 
 
@@ -61,5 +61,5 @@ fetch : Flags -> Int -> Cmd Msg
 fetch flags id =
     Http.get
         { url = flags.api ++ "/books/" ++ String.fromInt id
-        , expect = Http.expectJson OnFetch Book.decode
+        , expect = Http.expectJson OnFetch decodeBook
         }

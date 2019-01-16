@@ -5,10 +5,11 @@ import Url.Parser exposing ((</>), int, map, oneOf, parse, s, top)
 
 
 type Route
-    = HomeRoute
-    | NotFoundRoute
-    | BookListRoute
-    | BookRoute Int
+    = Home
+    | NotFound
+    | BookList
+    | Book Int
+    | BookNew
 
 
 parseUrl : Url -> Route
@@ -16,9 +17,10 @@ parseUrl url =
     let
         parser =
             oneOf
-                [ map HomeRoute top
-                , map BookListRoute (s "books")
-                , map BookRoute (s "books" </> int)
+                [ map Home top
+                , map BookList (s "books")
+                , map Book (s "books" </> int)
+                , map BookNew (s "books" </> s "new")
                 ]
     in
     case parse parser url of
@@ -26,20 +28,23 @@ parseUrl url =
             route
 
         Nothing ->
-            NotFoundRoute
+            NotFound
 
 
 pathFor : Route -> String
 pathFor route =
     case route of
-        HomeRoute ->
-            "/"
-
-        NotFoundRoute ->
+        NotFound ->
             "/404"
 
-        BookListRoute ->
+        Home ->
+            "/"
+
+        BookList ->
             "/books"
 
-        BookRoute id ->
+        Book id ->
             "/books/" ++ String.fromInt id
+
+        BookNew ->
+            "/books/new"

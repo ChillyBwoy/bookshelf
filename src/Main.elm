@@ -2,13 +2,13 @@ module Main exposing (main)
 
 import Browser exposing (UrlRequest)
 import Browser.Navigation as Nav
-import Debug
 import Html exposing (..)
 import Html.Attributes exposing (..)
-import Page.Book as Book
-import Page.BookList as BookList
-import Page.Home as Home
-import Router exposing (Route(..))
+import Page.Book.Add as BookAddPage
+import Page.Book.Detail as BookDetailPage
+import Page.Book.List as BookListPage
+import Page.Home as HomePage
+import Router
 import Shared exposing (..)
 import Url exposing (Url)
 
@@ -26,18 +26,20 @@ type alias Model =
 
 type Page
     = PageNotFound
-    | PageHome Home.Model
-    | PageBookList BookList.Model
-    | PageBook Book.Model
+    | PageHome HomePage.Model
+    | PageBookList BookListPage.Model
+    | PageBookDetail BookDetailPage.Model
+    | PageBookAdd BookAddPage.Model
 
 
 type Msg
     = NoOp
     | OnUrlRequest UrlRequest
     | OnUrlChange Url
-    | HomeMsg Home.Msg
-    | BookListMsg BookList.Msg
-    | BookMsg Book.Msg
+    | HomeMsg HomePage.Msg
+    | BookListMsg BookListPage.Msg
+    | BookDetailMsg BookDetailPage.Msg
+    | BookAddMsg BookAddPage.Msg
 
 
 
@@ -81,7 +83,7 @@ update message model =
         HomeMsg msg ->
             case model.page of
                 PageHome home ->
-                    loadPageHome model (Home.update msg home)
+                    loadPageHome model (HomePage.update msg home)
 
                 _ ->
                     ( model, Cmd.none )
@@ -89,55 +91,73 @@ update message model =
         BookListMsg msg ->
             case model.page of
                 PageBookList bookList ->
-                    loadBookListPage model (BookList.update msg bookList)
+                    loadBookListPage model (BookListPage.update msg bookList)
 
                 _ ->
                     ( model, Cmd.none )
 
-        BookMsg msg ->
+        BookDetailMsg msg ->
             case model.page of
-                PageBook book ->
-                    loadBookPage model (Book.update msg book)
+                PageBookDetail book ->
+                    loadBookDetailPage model (BookDetailPage.update msg book)
+
+                _ ->
+                    ( model, Cmd.none )
+
+        BookAddMsg msg ->
+            case model.page of
+                PageBookAdd m ->
+                    loadBookAddPage model (BookAddPage.update msg m)
 
                 _ ->
                     ( model, Cmd.none )
 
 
-loadPageHome : Model -> ( Home.Model, Cmd Home.Msg ) -> ( Model, Cmd Msg )
-loadPageHome model ( home, cmds ) =
-    ( { model | page = PageHome home }
+loadPageHome : Model -> ( HomePage.Model, Cmd HomePage.Msg ) -> ( Model, Cmd Msg )
+loadPageHome model ( m, cmds ) =
+    ( { model | page = PageHome m }
     , Cmd.map HomeMsg cmds
     )
 
 
-loadBookListPage : Model -> ( BookList.Model, Cmd BookList.Msg ) -> ( Model, Cmd Msg )
+loadBookListPage : Model -> ( BookListPage.Model, Cmd BookListPage.Msg ) -> ( Model, Cmd Msg )
 loadBookListPage model ( bookList, cmds ) =
     ( { model | page = PageBookList bookList }
     , Cmd.map BookListMsg cmds
     )
 
 
-loadBookPage : Model -> ( Book.Model, Cmd Book.Msg ) -> ( Model, Cmd Msg )
-loadBookPage model ( home, cmds ) =
-    ( { model | page = PageBook home }
-    , Cmd.map BookMsg cmds
+loadBookDetailPage : Model -> ( BookDetailPage.Model, Cmd BookDetailPage.Msg ) -> ( Model, Cmd Msg )
+loadBookDetailPage model ( book, cmds ) =
+    ( { model | page = PageBookDetail book }
+    , Cmd.map BookDetailMsg cmds
+    )
+
+
+loadBookAddPage : Model -> ( BookAddPage.Model, Cmd BookAddPage.Msg ) -> ( Model, Cmd Msg )
+loadBookAddPage model ( m, cmds ) =
+    ( { model | page = PageBookAdd m }
+    , Cmd.map BookAddMsg cmds
     )
 
 
 loadPage : Url -> Model -> ( Model, Cmd Msg )
 loadPage url model =
     case Router.parseUrl url of
-        NotFoundRoute ->
+        Router.NotFound ->
             ( { model | page = PageNotFound }, Cmd.none )
 
-        HomeRoute ->
-            loadPageHome model (Home.init model.flags)
+        Router.Home ->
+            loadPageHome model (HomePage.init model.flags)
 
-        BookListRoute ->
-            loadBookListPage model (BookList.init model.flags)
+        Router.BookList ->
+            loadBookListPage model (BookListPage.init model.flags)
 
-        BookRoute id ->
-            loadBookPage model (Book.init model.flags id)
+        Router.Book id ->
+            loadBookDetailPage model (BookDetailPage.init model.flags id)
+
+        Router.BookNew ->
+            loadBookAddPage model (BookAddPage.init model.flags)
 
 
 
@@ -151,13 +171,16 @@ subscriptions model =
             Sub.none
 
         PageHome m ->
-            Sub.map HomeMsg (Home.subscriptions m)
+            Sub.map HomeMsg (HomePage.subscriptions m)
 
         PageBookList m ->
-            Sub.map BookListMsg (BookList.subscriptions m)
+            Sub.map BookListMsg (BookListPage.subscriptions m)
 
-        PageBook m ->
-            Sub.map BookMsg (Book.subscriptions m)
+        PageBookDetail m ->
+            Sub.map BookDetailMsg (BookDetailPage.subscriptions m)
+
+        PageBookAdd m ->
+            Sub.map BookAddMsg (BookAddPage.subscriptions m)
 
 
 
@@ -176,8 +199,8 @@ viewNav model =
     let
         routeList : List ( String, String )
         routeList =
-            [ ( "Home", Router.pathFor HomeRoute )
-            , ( "Books", Router.pathFor BookListRoute )
+            [ ( "Home", Router.pathFor Router.Home )
+            , ( "Books", Router.pathFor Router.BookList )
             ]
     in
     nav []
@@ -194,13 +217,16 @@ viewLayout model =
                     notFoundView
 
                 PageHome m ->
-                    Home.view m |> Html.map HomeMsg
+                    HomePage.view m |> Html.map HomeMsg
 
                 PageBookList m ->
-                    BookList.view m |> Html.map BookListMsg
+                    BookListPage.view m |> Html.map BookListMsg
 
-                PageBook m ->
-                    Book.view m |> Html.map BookMsg
+                PageBookDetail m ->
+                    BookDetailPage.view m |> Html.map BookDetailMsg
+
+                PageBookAdd m ->
+                    BookAddPage.view m |> Html.map BookAddMsg
     in
     div []
         [ viewNav model

@@ -1,4 +1,4 @@
-module Book exposing (Book, decode)
+module Model exposing (Book, decodeBook)
 
 import Date exposing (Date)
 import Html exposing (..)
@@ -16,8 +16,8 @@ type alias Book =
     }
 
 
-decode : Decoder Book
-decode =
+decodeBook : Decoder Book
+decodeBook =
     Decode.map5 Book
         (Decode.field "id" Decode.int)
         (Decode.field "description" Decode.string)
