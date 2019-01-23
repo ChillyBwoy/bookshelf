@@ -1,4 +1,4 @@
-from rest_framework import routers, serializers, viewsets
+from rest_framework import serializers, viewsets
 
 from .models import Book
 
@@ -6,7 +6,7 @@ from .models import Book
 class BookSerializer(serializers.ModelSerializer):
     class Meta:
         model = Book
-        fields = ('id', 'isbn', 'title', 'description', 'published_at')
+        fields = ("id", "isbn", "title", "description", "published_at")
 
 
 class BookViewSet(viewsets.ModelViewSet):

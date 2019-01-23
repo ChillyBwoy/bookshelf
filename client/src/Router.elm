@@ -1,7 +1,7 @@
 module Router exposing (Route(..), parseUrl, pathFor)
 
 import Url exposing (Url)
-import Url.Parser exposing ((</>), int, map, oneOf, parse, s, top)
+import Url.Parser exposing ((</>), Parser, int, map, oneOf, parse, s, top)
 
 
 type Route
@@ -12,18 +12,20 @@ type Route
     | BookNew
 
 
-parseUrl : Url -> Route
-parseUrl url =
-    let
-        parser =
-            oneOf
+parser : String -> Parser (Route -> a) a
+parser prefixUrl =
+    s prefixUrl
+        </> oneOf
                 [ map Home top
                 , map BookList (s "books")
                 , map Book (s "books" </> int)
                 , map BookNew (s "books" </> s "new")
                 ]
-    in
-    case parse parser url of
+
+
+parseUrl : String -> Url -> Route
+parseUrl prefix url =
+    case parse (parser prefix) url of
         Just route ->
             route
 
@@ -31,20 +33,24 @@ parseUrl url =
             NotFound
 
 
-pathFor : Route -> String
-pathFor route =
+pathFor : String -> Route -> String
+pathFor urlPrefix route =
+    let
+        prefix =
+            "/" ++ urlPrefix
+    in
     case route of
         NotFound ->
-            "/404"
+            prefix ++ "/404"
 
         Home ->
-            "/"
+            prefix ++ "/"
 
         BookList ->
-            "/books"
+            prefix ++ "/books"
 
         Book id ->
-            "/books/" ++ String.fromInt id
+            prefix ++ "/books/" ++ String.fromInt id
 
         BookNew ->
-            "/books/new"
+            prefix ++ "/books/new"

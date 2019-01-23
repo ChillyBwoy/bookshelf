@@ -6,6 +6,7 @@ import Json.Decode as Decode exposing (Decoder)
 
 type alias Flags =
     { api : String
+    , urlPrefix : String
     }
 
 

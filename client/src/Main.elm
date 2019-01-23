@@ -48,11 +48,14 @@ type Msg
 
 init : Flags -> Url -> Nav.Key -> ( Model, Cmd Msg )
 init flags url key =
-    loadPage url
-        { flags = flags
-        , key = key
-        , page = PageNotFound
-        }
+    let
+        model =
+            { flags = flags
+            , key = key
+            , page = PageNotFound
+            }
+    in
+    loadPage url model
 
 
 
@@ -143,7 +146,11 @@ loadBookAddPage model ( m, cmds ) =
 
 loadPage : Url -> Model -> ( Model, Cmd Msg )
 loadPage url model =
-    case Router.parseUrl url of
+    let
+        { urlPrefix } =
+            model.flags
+    in
+    case Router.parseUrl urlPrefix url of
         Router.NotFound ->
             ( { model | page = PageNotFound }, Cmd.none )
 
@@ -197,10 +204,13 @@ viewNavItem ( label, url ) =
 viewNav : Model -> Html Msg
 viewNav model =
     let
+        { urlPrefix } =
+            model.flags
+
         routeList : List ( String, String )
         routeList =
-            [ ( "Home", Router.pathFor Router.Home )
-            , ( "Books", Router.pathFor Router.BookList )
+            [ ( "Home", Router.pathFor urlPrefix Router.Home )
+            , ( "Books", Router.pathFor urlPrefix Router.BookList )
             ]
     in
     nav []

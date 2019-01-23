@@ -12,6 +12,7 @@ import Shared exposing (..)
 
 type alias Model =
     { books : RemoteData (List Book)
+    , flags : Flags
     }
 
 
@@ -21,7 +22,7 @@ type Msg
 
 init : Flags -> ( Model, Cmd Msg )
 init flags =
-    ( { books = Loading }, fetchBooks flags )
+    ( { books = Loading, flags = flags }, fetchBooks flags )
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -47,11 +48,14 @@ subscriptions model =
     Sub.none
 
 
-viewListItem : Book -> Html a
-viewListItem book =
+viewListItem : Model -> Book -> Html a
+viewListItem model book =
     let
+        { urlPrefix } =
+            model.flags
+
         url =
-            Router.pathFor (Router.Book book.id)
+            Router.pathFor urlPrefix (Router.Book book.id)
     in
     li []
         [ a [ href url ] [ text book.title ]
@@ -59,17 +63,25 @@ viewListItem book =
         ]
 
 
-viewList : List Book -> Html a
-viewList books =
-    ul [] (List.map viewListItem books)
+viewList : Model -> List Book -> Html a
+viewList model books =
+    let
+        listView =
+            viewListItem model
+    in
+    ul [] (List.map listView books)
 
 
 view : Model -> Html Msg
 view model =
+    let
+        { urlPrefix } =
+            model.flags
+    in
     div []
         [ h1 [] [ text "Books" ]
         , div []
-            [ a [ href (Router.pathFor Router.BookNew) ] [ text "add new one" ]
+            [ a [ href (Router.pathFor urlPrefix Router.BookNew) ] [ text "add new one" ]
             ]
         , div []
             [ case model.books of
@@ -77,7 +89,7 @@ view model =
                     div [] [ text "Loading..." ]
 
                 Loaded books ->
-                    viewList books
+                    viewList model books
 
                 Failure ->
                     div [] [ text "Error" ]

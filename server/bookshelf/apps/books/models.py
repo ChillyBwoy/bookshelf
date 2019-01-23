@@ -9,7 +9,7 @@ class Book(models.Model):
     title = models.CharField(_("title"), max_length=140)
     description = models.TextField(_("description"), blank=True)
     published_at = models.DateField(_("publish date"), blank=True, null=True)
+    created_at = models.DateTimeField(_("entity creation date"), auto_now_add=True)
 
     def __str__(self):
         return self.title
-

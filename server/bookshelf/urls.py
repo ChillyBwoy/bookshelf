@@ -28,5 +28,5 @@ router.register(r"books", BookViewSet)
 urlpatterns = [
     url("api/", include(router.urls)),
     path("admin/", admin.site.urls),
-    url("^$", TemplateView.as_view(template_name="index.html")),
+    url("^bookshelf/$", TemplateView.as_view(template_name="index.html")),
 ]
