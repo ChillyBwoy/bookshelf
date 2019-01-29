@@ -3,32 +3,34 @@ module Page.Book.Detail exposing (Model, Msg(..), init, subscriptions, update, v
 import Decoder exposing (decodeBook)
 import Html exposing (..)
 import Http
-import Model exposing (Book, Flags, RemoteData(..))
+import Model exposing (Book, Flags)
+import RemoteData exposing (WebData)
 
 
 type alias Model =
-    { book : RemoteData Book
+    { book : WebData Book
     , id : Int
     }
 
 
 type Msg
-    = OnFetch (Result Http.Error Book)
+    = RequestBook
+    | ReceiveBook (WebData Book)
 
 
 init : Flags -> Int -> ( Model, Cmd Msg )
 init flags id =
-    ( { book = Loading, id = id }, fetch flags id )
+    ( { book = RemoteData.Loading, id = id }, fetchBook flags id )
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        OnFetch (Ok book) ->
-            ( { model | book = Loaded book }, Cmd.none )
+        RequestBook ->
+            ( { model | book = RemoteData.Loading }, Cmd.none )
 
-        OnFetch (Err err) ->
-            ( { model | book = Failure }, Cmd.none )
+        ReceiveBook response ->
+            ( { model | book = response }, Cmd.none )
 
 
 subscriptions : Model -> Sub Msg
@@ -41,24 +43,31 @@ view model =
     div []
         [ h1 [] [ text "Book" ]
         , case model.book of
-            Loading ->
+            RemoteData.NotAsked ->
+                div [] []
+
+            RemoteData.Loading ->
                 div [] [ text "Loading..." ]
 
-            Loaded book ->
+            RemoteData.Success book ->
                 div []
                     [ h4 [] [ text book.title ]
                     , div [] [ text ("isbn: " ++ book.isbn) ]
                     , div [] [ text book.description ]
                     ]
 
-            Failure ->
+            RemoteData.Failure err ->
+                let
+                    _ =
+                        Debug.log "err" err
+                in
                 div [] [ text "Error" ]
         ]
 
 
-fetch : Flags -> Int -> Cmd Msg
-fetch flags id =
+fetchBook : Flags -> Int -> Cmd Msg
+fetchBook flags id =
     Http.get
         { url = flags.api ++ "/books/" ++ String.fromInt id
-        , expect = Http.expectJson OnFetch decodeBook
+        , expect = Http.expectJson (RemoteData.fromResult >> ReceiveBook) decodeBook
         }

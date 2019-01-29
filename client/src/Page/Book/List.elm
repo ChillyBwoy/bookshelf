@@ -1,45 +1,47 @@
 module Page.Book.List exposing (Model, Msg(..), fetchBooks, init, subscriptions, update, view)
 
 import Date exposing (Date)
-import Decoder exposing (decodeBook)
+import Decoder exposing (decodeBook, entityListDecoder)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Http
 import Json.Decode as Decode exposing (Decoder)
-import Model exposing (Book, Flags, RemoteData(..))
+import Model exposing (Book, Flags, ResponseList)
+import RemoteData exposing (WebData)
 import Router
 
 
 type alias Model =
-    { books : RemoteData (List Book)
+    { books : WebData (ResponseList Book)
     , flags : Flags
     }
 
 
 type Msg
-    = OnFetchBooks (Result Http.Error (List Book))
+    = RequestBookList
+    | ReceiveBookList (WebData (ResponseList Book))
 
 
 init : Flags -> ( Model, Cmd Msg )
 init flags =
-    ( { books = Loading, flags = flags }, fetchBooks flags )
+    ( { books = RemoteData.NotAsked, flags = flags }, fetchBooks flags )
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        OnFetchBooks (Ok books) ->
-            ( { model | books = Loaded books }, Cmd.none )
+        RequestBookList ->
+            ( { model | books = RemoteData.Loading }, fetchBooks model.flags )
 
-        OnFetchBooks (Err err) ->
-            ( { model | books = Failure }, Cmd.none )
+        ReceiveBookList response ->
+            ( { model | books = response }, Cmd.none )
 
 
 fetchBooks : Flags -> Cmd Msg
 fetchBooks flags =
     Http.get
         { url = flags.api ++ "/books"
-        , expect = Http.expectJson OnFetchBooks (Decode.list decodeBook)
+        , expect = Http.expectJson (RemoteData.fromResult >> ReceiveBookList) (entityListDecoder decodeBook)
         }
 
 
@@ -63,13 +65,13 @@ viewListItem model book =
         ]
 
 
-viewList : Model -> List Book -> Html a
+viewList : Model -> ResponseList Book -> Html a
 viewList model books =
     let
         listView =
             viewListItem model
     in
-    ul [] (List.map listView books)
+    ul [] (List.map listView books.results)
 
 
 view : Model -> Html Msg
@@ -85,13 +87,20 @@ view model =
             ]
         , div []
             [ case model.books of
-                Loading ->
+                RemoteData.NotAsked ->
+                    div [] [ text "" ]
+
+                RemoteData.Loading ->
                     div [] [ text "Loading..." ]
 
-                Loaded books ->
+                RemoteData.Success books ->
                     viewList model books
 
-                Failure ->
+                RemoteData.Failure err ->
+                    let
+                        _ =
+                            Debug.log "err" err
+                    in
                     div [] [ text "Error" ]
             ]
         ]
