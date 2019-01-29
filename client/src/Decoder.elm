@@ -1,8 +1,9 @@
-module Decoder exposing (decodeBook, decodeDate, entityDecoder, entityListDecoder)
+module Decoder exposing (decodeBook, decodeDate, decodeListWith)
 
+import Api exposing (ResponseList)
 import Date exposing (Date)
 import Json.Decode as Decode exposing (Decoder)
-import Model exposing (Book, ResponseList)
+import Model exposing (Book)
 
 
 decodeBook : Decoder Book
@@ -29,15 +30,10 @@ decodeDate =
             )
 
 
-entityListDecoder : Decoder entity -> Decoder (ResponseList entity)
-entityListDecoder withDecoder =
+decodeListWith : Decoder entity -> Decoder (ResponseList entity)
+decodeListWith entityDecoder =
     Decode.map4 ResponseList
         (Decode.field "count" Decode.int)
         (Decode.field "next" (Decode.nullable Decode.string))
         (Decode.field "previous" (Decode.nullable Decode.string))
-        (Decode.field "results" (Decode.list withDecoder))
-
-
-entityDecoder : Decoder entity -> Decoder entity
-entityDecoder withDecoder =
-    withDecoder
+        (Decode.field "results" (Decode.list entityDecoder))

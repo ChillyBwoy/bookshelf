@@ -1,18 +1,20 @@
 module Page.Book.List exposing (Model, Msg(..), fetchBooks, init, subscriptions, update, view)
 
+import Api exposing (ResponseList)
 import Date exposing (Date)
-import Decoder exposing (decodeBook, entityListDecoder)
+import Decoder exposing (decodeBook, decodeListWith)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Http
 import Json.Decode as Decode exposing (Decoder)
-import Model exposing (Book, Flags, ResponseList)
+import Model exposing (Book, Flags)
 import RemoteData exposing (WebData)
 import Router
 
 
 type alias Model =
     { books : WebData (ResponseList Book)
+    , pageSize : Int
     , flags : Flags
     }
 
@@ -20,29 +22,32 @@ type alias Model =
 type Msg
     = RequestBookList
     | ReceiveBookList (WebData (ResponseList Book))
+    | GoToPage Int
 
 
 init : Flags -> ( Model, Cmd Msg )
 init flags =
-    ( { books = RemoteData.NotAsked, flags = flags }, fetchBooks flags )
+    let
+        model =
+            { books = RemoteData.NotAsked
+            , flags = flags
+            , pageSize = 3
+            }
+    in
+    ( model, fetchBooks model )
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         RequestBookList ->
-            ( { model | books = RemoteData.Loading }, fetchBooks model.flags )
+            ( { model | books = RemoteData.Loading }, fetchBooks model )
 
         ReceiveBookList response ->
             ( { model | books = response }, Cmd.none )
 
-
-fetchBooks : Flags -> Cmd Msg
-fetchBooks flags =
-    Http.get
-        { url = flags.api ++ "/books"
-        , expect = Http.expectJson (RemoteData.fromResult >> ReceiveBookList) (entityListDecoder decodeBook)
-        }
+        GoToPage pageNum ->
+            ( model, Cmd.none )
 
 
 subscriptions : Model -> Sub Msg
@@ -50,7 +55,19 @@ subscriptions model =
     Sub.none
 
 
-viewListItem : Model -> Book -> Html a
+fetchBooks : Model -> Cmd Msg
+fetchBooks model =
+    let
+        url =
+            model.flags.api ++ "/books?page_size=" ++ String.fromInt model.pageSize
+    in
+    Http.get
+        { url = url
+        , expect = Http.expectJson (RemoteData.fromResult >> ReceiveBookList) (decodeListWith decodeBook)
+        }
+
+
+viewListItem : Model -> Book -> Html Msg
 viewListItem model book =
     let
         { urlPrefix } =
@@ -65,13 +82,18 @@ viewListItem model book =
         ]
 
 
-viewList : Model -> ResponseList Book -> Html a
+viewList : Model -> ResponseList Book -> Html Msg
 viewList model books =
     let
         listView =
             viewListItem model
     in
     ul [] (List.map listView books.results)
+
+
+viewPagination : Model -> ResponseList Book -> Html Msg
+viewPagination model books =
+    div [] []
 
 
 view : Model -> Html Msg
