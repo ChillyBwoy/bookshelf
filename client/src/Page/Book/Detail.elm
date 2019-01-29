@@ -1,10 +1,9 @@
 module Page.Book.Detail exposing (Model, Msg(..), init, subscriptions, update, view)
 
+import Decoder exposing (decodeBook)
 import Html exposing (..)
 import Http
-import Json.Decode as Decode exposing (Decoder)
-import Model exposing (Book, decodeBook)
-import Shared exposing (..)
+import Model exposing (Book, Flags, RemoteData(..))
 
 
 type alias Model =

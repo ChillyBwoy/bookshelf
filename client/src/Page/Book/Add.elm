@@ -1,7 +1,7 @@
 module Page.Book.Add exposing (Model, Msg(..), init, subscriptions, update, view)
 
 import Html exposing (..)
-import Shared exposing (..)
+import Model exposing (Flags)
 
 
 type alias Model =

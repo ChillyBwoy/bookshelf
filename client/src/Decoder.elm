@@ -1,19 +1,18 @@
-module Shared exposing (Flags, RemoteData(..), decodeDate)
+module Decoder exposing (decodeBook, decodeDate)
 
 import Date exposing (Date)
 import Json.Decode as Decode exposing (Decoder)
+import Model exposing (Book)
 
 
-type alias Flags =
-    { api : String
-    , urlPrefix : String
-    }
-
-
-type RemoteData a
-    = Loading
-    | Loaded a
-    | Failure
+decodeBook : Decoder Book
+decodeBook =
+    Decode.map5 Book
+        (Decode.field "id" Decode.int)
+        (Decode.field "description" Decode.string)
+        (Decode.field "isbn" Decode.string)
+        (Decode.field "title" Decode.string)
+        (Decode.maybe (Decode.field "publishedAt" decodeDate))
 
 
 decodeDate : Decoder Date

@@ -4,12 +4,12 @@ import Browser exposing (UrlRequest)
 import Browser.Navigation as Nav
 import Html exposing (..)
 import Html.Attributes exposing (..)
+import Model exposing (Flags)
 import Page.Book.Add as BookAddPage
 import Page.Book.Detail as BookDetailPage
 import Page.Book.List as BookListPage
 import Page.Home as HomePage
 import Router
-import Shared exposing (..)
 import Url exposing (Url)
 
 

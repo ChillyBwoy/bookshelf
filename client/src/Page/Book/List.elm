@@ -1,13 +1,13 @@
 module Page.Book.List exposing (Model, Msg(..), fetchBooks, init, subscriptions, update, view)
 
 import Date exposing (Date)
+import Decoder exposing (decodeBook)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Http
 import Json.Decode as Decode exposing (Decoder)
-import Model exposing (Book, decodeBook)
+import Model exposing (Book, Flags, RemoteData(..))
 import Router
-import Shared exposing (..)
 
 
 type alias Model =

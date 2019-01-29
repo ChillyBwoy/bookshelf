@@ -110,4 +110,4 @@ STATIC_URL = "/assets/"
 
 STATICFILES_DIRS = [os.path.join(ROOT_DIR, "client", "public", "assets")]
 
-# REST_FRAMEWORK = {"DEFAULT_PAGINATION_CLASS": "bookshelf.apps.core.api.ListPagination"}
+REST_FRAMEWORK = {"DEFAULT_PAGINATION_CLASS": "bookshelf.apps.core.api.ListPagination"}
